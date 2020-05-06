@@ -1,0 +1,236 @@
+@extends('backend.admin-master')
+@section('style')
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.jqueryui.min.css">
+    <style>
+        .dataTables_wrapper .dataTables_paginate .paginate_button{
+            padding: 0 !important;
+        }
+        div.dataTables_wrapper div.dataTables_length select {
+            width: 60px;
+            display: inline-block;
+        }
+    </style>
+@endsection
+@section('site-title')
+    {{__('All Admins')}}
+@endsection
+@section('content')
+    <div class="col-lg-12 col-ml-12 padding-bottom-30">
+        <div class="row">
+            <div class="col-12 mt-5">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="col-12 mt-5">
+                            <div class="card">
+                                <div class="card-body">
+                                    @include('backend/partials/message')
+                                    <h4 class="header-title">{{__('All Admin Create By Super Admin')}}</h4>
+                                    <div class="data-tables datatable-primary">
+                                        <table id="all_user_table" class="text-center">
+                                            <thead class="text-capitalize">
+                                            <tr>
+                                                <th>{{__('ID')}}</th>
+                                                <th>{{__('Name')}}</th>
+                                                <th>{{__('Username')}}</th>
+                                                <th>{{__('Image')}}</th>
+                                                <th>{{__('Role')}}</th>
+                                                <th>{{__('Email')}}</th>
+                                                <th>{{__('Action')}}</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($all_user as $data)
+                                                <tr>
+                                                    <td>{{$data->id}}</td>
+                                                    <td>{{$data->name}}</td>
+                                                    <td>{{$data->username}}</td>
+                                                    <td>
+                                                        @if(file_exists('assets/uploads/admins/admin-pic-'.$data->id.'.'.$data->image))
+                                                            <img style="max-width: 80px;border: 1px solid #e2e2e2" src="{{asset('assets/uploads/admins/admin-pic-'.$data->id.'.'.$data->image)}}" alt="{{__($data->name)}}">
+                                                            @php $img_url = asset('assets/uploads/admins/admin-pic-'.$data->id.'.'.$data->image) @endphp
+                                                        @else
+                                                            <img style="max-width: 80px" src="{{asset('assets/uploads/no-image.png')}}" alt="no image available">
+                                                            @php $img_url = asset('assets/uploads/no-image.png') @endphp
+                                                        @endif
+
+                                                    </td>
+                                                    <td>{{$data->role}}</td>
+                                                    <td>{{$data->email}}</td>
+                                                    <td>
+                                                        <a tabindex="0" class="btn btn-lg btn-danger btn-sm mb-3 mr-1" role="button" data-toggle="popover" data-trigger="focus" data-html="true" title="" data-content="
+                                                       <h6>Are you sure to delete this user?</h6>
+                                                       <form method='post' action='{{route('admin.delete.user',$data->id)}}'>
+                                                       <input type='hidden' name='_token' value='{{csrf_token()}}'>
+                                                       <br>
+                                                        <input type='submit' class='btn btn-danger btn-sm' value='Yes,Delete'>
+                                                        </form>
+                                                        " data-original-title="">
+                                                            <i class="ti-trash"></i>
+                                                        </a>
+                                                        <a href="#"
+                                                           data-id="{{$data->id}}"
+                                                           data-name="{{$data->name}}"
+                                                           data-role="{{$data->role}}"
+                                                           data-email="{{$data->email}}"
+                                                           data-image="{{$img_url}}"
+                                                           data-toggle="modal"
+                                                           data-target="#user_edit_modal"
+                                                           class="btn btn-lg btn-primary btn-sm mb-3 mr-1 user_edit_btn"
+                                                        >
+                                                            <i class="ti-pencil"></i>
+                                                        </a>
+                                                        <a href="#"
+                                                           data-id="{{$data->id}}"
+                                                           data-toggle="modal"
+                                                           data-target="#user_change_password_modal"
+                                                           class="btn btn-lg btn-info btn-sm mb-3 mr-1 user_change_password_btn"
+                                                        >
+                                                            {{__("Change Password")}}
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Primary table end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="user_edit_modal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{__('User Details Edit')}}</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                </div>
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach($errors->all() as $error)
+                                <li>{{$error}}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                <form action="{{route('admin.user.update')}}" id="user_edit_modal_form" method="post" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="user_id" id="user_id">
+                        @csrf
+                        <div class="form-group">
+                            <label for="name">{{__('Name')}}</label>
+                            <input type="text" class="form-control"  id="name" name="name" placeholder="{{__('Enter name')}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">{{__('Email')}}</label>
+                            <input type="text" class="form-control"  id="email" name="email" placeholder="{{__('Email')}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="role">{{__('Role')}}</label>
+                            <select name="role" id="role" class="form-control">
+                                <option value="editor">{{__("Editor")}}</option>
+                                <option value="admin">{{__("Admin")}}</option>
+                                <option value="super_admin">{{__('Super Admin')}}</option>
+                            </select>
+                        </div>
+                        <div class="image-wrap">
+                            <img src="" style="max-width: 80px;border: 1px solid #e2e2e2;margin-bottom: 20px" id="modal_preview_image" alt="">
+                        </div>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" name="image" id="image">
+                            <label class="custom-file-label" for="image">{{__('Image')}}</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('Close')}}</button>
+                        <button type="submit" class="btn btn-primary">{{__('Save changes')}}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="user_change_password_modal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{__('Change Admin Password')}}</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                </div>
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach($errors->all() as $error)
+                                <li>{{$error}}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                <form action="{{route('admin.user.password.change')}}" id="user_password_change_modal_form" method="post" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="ch_user_id" id="ch_user_id">
+                        <div class="form-group">
+                            <label for="password">{{__('Password')}}</label>
+                            <input type="password" class="form-control" name="password" placeholder="{{__('Enter Password')}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="password_confirmation">{{__('Confirm Password')}}</label>
+                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="{{__('Confirm Password')}}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('Close')}}</button>
+                        <button type="submit" class="btn btn-primary">{{__('Change Password')}}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('script')
+    <!-- Start datatable js -->
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+
+            $(document).on('click','.user_change_password_btn',function(e){
+                e.preventDefault();
+                var el = $(this);
+                var form = $('#user_password_change_modal_form');
+                form.find('#ch_user_id').val(el.data('id'));
+            });
+            $('#all_user_table').DataTable( {
+                "order": [[ 0, "desc" ]]
+            } );
+
+            $(document).on('click','.user_edit_btn',function(e){
+                e.preventDefault();
+                var form = $('#user_edit_modal_form');
+                var el = $(this);
+                form.find('#user_id').val(el.data('id'));
+                form.find('#name').val(el.data('name'));
+                form.find('#username').val(el.data('username'));
+                form.find('#email').val(el.data('email'));
+                form.find('#modal_preview_image').attr('src',el.data('image'));
+                form.find('#role option[value='+el.data('role')+']').attr('selected',true);
+            })
+
+        } );
+    </script>
+@endsection
